@@ -108,10 +108,8 @@ function patch_boot_files()
 	
 	# device tree diff, based on pwnerblu's with fixes
 	
-	xpwntool output/Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k48ap.img3 DeviceTree.bin -iv e0a3aa63dae431e573c9827dd3636dd1 -k 50208af7c2de617854635fb4fc4eaa8cddab0e9035ea25abf81b0fa8b0b5654f
-	python3 "$code/ddt fixed.py" apply DeviceTree.bin DeviceTree.patched "$code/device tree.diff"
-	xpwntool DeviceTree.patched output/Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k48ap.img3 -t ios_5_ipad/Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k48ap.img3
-	
+	cp $code/DeviceTree.k47ap.img3 output/Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k48ap.img3
+
 	# Yes, I am absolutely aware that k49ap isn't actually for hardware, but it's for custom rdtr only - pwnerblu
 	cp $code/DeviceTree.k48ap.img3 output/Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k49ap.img3
 	# iphone kc (ipad kc doesn't even start to boot the ramdisk? idk why)
