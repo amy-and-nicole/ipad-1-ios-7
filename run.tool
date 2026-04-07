@@ -123,6 +123,26 @@ function build_artifacts()
 	codesign -fs - MP4VH2.videodecoder
 	
 	mv IMGSGX535GLDriver H264H2.videodecoder MP4VH2.videodecoder "$artifacts"
+	
+	# TODO: cc workaround, still don't understand root cause, see UIScreenEdgePanRecognizer._useGrapeFlags?
+	
+	cp "$root/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7" dyld_shared_cache_armv7.patched
+	
+	echo -n '\x00' | dd conv=notrunc bs=1 seek=64288286 of=dyld_shared_cache_armv7.patched
+	
+	# re-sign (boots without it, but intermittent codesigning crashes)
+	
+	PYTHONPATH="$repo_6" python3 -c 'from yolosign import off2page, yolosign
+yolosign("dyld_shared_cache_armv7.patched", [off2page(64288286)])'
+	
+	# generate a diff to apply without python
+	
+	xxd "$root/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7" > dyld_shared_cache_armv7.hex
+	xxd dyld_shared_cache_armv7.patched > dyld_shared_cache_armv7.patched.hex
+	
+	set +e
+	diff dyld_shared_cache_armv7.hex dyld_shared_cache_armv7.patched.hex > "$artifacts/dyld_shared_cache_armv7.patch"
+	set -e
 }
 
 function patch_boot_files()
@@ -173,16 +193,11 @@ function patch_root
 	
 	sudo rm -r "$root/System/Library/HIDPlugins/CompassPlugIn.plugin"
 	
-	# TODO: cc workaround, still don't understand root cause, see UIScreenEdgePanRecognizer._useGrapeFlags?
+	# ipad dsc patch
 	
-	cp "$root/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7" dyld_shared_cache_armv7.patched
-	
-	echo -n '\x00' | dd conv=notrunc bs=1 seek=64288286 of=dyld_shared_cache_armv7.patched
-	
-	# re-sign dsc (boots without it, but intermittent codesigning crashes)
-	
-	PYTHONPATH="$repo_6" python3 -c 'from yolosign import off2page, yolosign
-yolosign("dyld_shared_cache_armv7.patched", [off2page(64288286)])'
+	xxd "$root/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7" > dyld_shared_cache_armv7.hex
+	patch dyld_shared_cache_armv7.hex < "$artifacts/dyld_shared_cache_armv7.patch"
+	xxd -r dyld_shared_cache_armv7.hex > dyld_shared_cache_armv7.patched
 	
 	sudo cp dyld_shared_cache_armv7.patched "$root/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7"
 	sudo chown -R root:wheel "$root/System/Library/Caches/com.apple.dyld"
