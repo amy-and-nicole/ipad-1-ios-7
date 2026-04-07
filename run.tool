@@ -6,6 +6,7 @@ cd "$(dirname "$0")"
 code="$PWD/resources"
 deps="$PWD/dependencies"
 temp="$PWD/temp"
+artifacts="$PWD/artifacts"
 
 repo_6="$deps/SundanceInH2A"
 repo_legacy="$deps/Legacy-iOS-Kit"
@@ -93,6 +94,22 @@ function setup()
 	cp -cR ios_5_ipad output
 }
 
+function build_artifacts()
+{
+	rm -rf "$artifacts"
+	mkdir "$artifacts"
+	
+	# reapply device tree diffs
+	
+	xpwntool output/Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k48ap.img3 DeviceTree.bin -iv e0a3aa63dae431e573c9827dd3636dd1 -k 50208af7c2de617854635fb4fc4eaa8cddab0e9035ea25abf81b0fa8b0b5654f
+	
+	python3 "$repo_6/dt/ddt.py" apply DeviceTree.bin DeviceTree.patched "$code/device tree.diff"
+	python3 "$repo_6/dt/ddt.py" apply DeviceTree.patched DeviceTree.restore.patched "$code/device tree restore extra.diff"
+	
+	xpwntool DeviceTree.patched "$artifacts/DeviceTree.k48ap.img3" -t ios_5_ipad/Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k48ap.img3
+	xpwntool DeviceTree.restore.patched "$artifacts/DeviceTree.k48ap.restore.img3" -t ios_5_ipad/Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k48ap.img3
+}
+
 function patch_boot_files()
 {
 	# iboot stuff that i don't understand, from pwnerblu's script
@@ -106,18 +123,22 @@ function patch_boot_files()
 	img3maker -f iBSS.patched -o output/Firmware/dfu/iBSS.k48ap.RELEASE.dfu -t ibss
 	img3maker -f iBEC.patched -o output/Firmware/dfu/iBEC.k48ap.RELEASE.dfu -t ibec
 	
-	# device tree diff, based on pwnerblu's with fixes
+	# device tree, based on pwnerblu's with fixes
 	
-	cp $code/DeviceTree.k47ap.img3 output/Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k48ap.img3
-
+	cp "$artifacts/DeviceTree.k48ap.img3" output/Firmware/all_flash/all_flash.k48ap.production
+	
+	# device tree without charging fix for restores specifically
 	# Yes, I am absolutely aware that k49ap isn't actually for hardware, but it's for custom rdtr only - pwnerblu
-	cp $code/DeviceTree.k48ap.img3 output/Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k49ap.img3
-	# iphone kc (ipad kc doesn't even start to boot the ramdisk? idk why)
+	
+	cp "$artifacts/DeviceTree.k48ap.restore.img3" output/Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k49ap.img3
+	
+	# custom buildmanifest
+	
+	cp "$code/BuildManifest.plist" output/BuildManifest.plist
+	
+	# iphone kc (ipad 2 kc incompatible)
 	
 	cp ios_7_iphone/kernelcache.release.n90 output/kernelcache.release.k48
-
-	# custom buildmanifest
-	cp $code/BuildManifest.plist output/BuildManifest.plist
 }
 
 function patch_root
@@ -292,6 +313,13 @@ else
 	arg_hactivate=$(prompt_yes_no 'hactivate?')
 	
 	setup
+	
+	if [[ ! -e "$artifacts" ]]
+	then
+		prompt_enter 'missing artifacts. re-download the repo, or enter to rebuild'
+		
+		build_artifacts
+	fi
 	
 	patch_boot_files
 	patch_root $arg_hactivate

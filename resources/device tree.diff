@@ -46,13 +46,6 @@ PROP REMOVE event_name-gpio3 device-tree/arm-io/i2c0/pmu
 PROP REMOVE event_name-gpio4 device-tree/arm-io/i2c0/pmu
 PROP SET compatible 636861726765722c6e383800 device-tree/charger
 PROP REMOVE interrupt-parent device-tree/charger
-
-# removed these, breaks charging -Amy
-# TODO: function-set_charger alone caused problems restoring? and still HighOrLowTemperature with function-usb_det alone. double-check?
-
-# PROP REMOVE function-usb_det device-tree/charger
-# PROP REMOVE function-set_charger device-tree/charger
-
 PROP REMOVE interrupts device-tree/charger
 
 # TODO: disabled.. no crash here? and it breaks audio.. -Amy

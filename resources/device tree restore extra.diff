@@ -1,0 +1,5 @@
+# these properties break restores under some circumstances (thank you pwnerblu) but removing them breaks charging
+# TODO: if we want to find the root cause, remove them unconditionally again and look for "HighOrLowTemperature" in ioreg..
+
+PROP REMOVE function-usb_det device-tree/charger
+PROP REMOVE function-set_charger device-tree/charger
