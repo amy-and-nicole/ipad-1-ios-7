@@ -28,10 +28,10 @@ function get_deps
 	pushd "$deps"
 	
 	git clone 'https://github.com/NyanSatan/SundanceInH2A'
-	git -C SundanceInH2A checkout 0218b8db7d89a643cd0ad28f29fbdf496b88d4e3
+	git -C SundanceInH2A checkout 03865acd7b6064d7616fd34595410d707fb6fdbd
 
 	git clone 'https://github.com/LukeZGD/Legacy-iOS-Kit'
-	git -C Legacy-iOS-Kit checkout 26fffdfdaaa247577ecfaad4377cb6f697716bd5
+	git -C Legacy-iOS-Kit checkout 88d0fc5931b40204f7b1ec095f7e928fd6b0f595
 
 	git clone 'https://github.com/staturnzz/lyncis_site'
 	git -C lyncis_site checkout 49f7206119c5b66fa1b1d5d57083ecb4864ca584
