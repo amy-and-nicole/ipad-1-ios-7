@@ -127,14 +127,10 @@ function patch_boot_files()
 	
 	cp "$artifacts/DeviceTree.k48ap.img3" output/Firmware/all_flash/all_flash.k48ap.production
 	
-	# device tree without charging fix for restores specifically
-	# Yes, I am absolutely aware that k49ap isn't actually for hardware, but it's for custom rdtr only - pwnerblu
+	# device tree to be used for restore specifically, thank you pwnerblu!
 	
-	cp "$artifacts/DeviceTree.k48ap.restore.img3" output/Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k49ap.img3
-	
-	# custom buildmanifest
-	
-	cp "$code/BuildManifest.plist" output/BuildManifest.plist
+	cp "$artifacts/DeviceTree.k48ap.restore.img3" output/Firmware/all_flash/all_flash.k48ap.production
+	PlistBuddy output/BuildManifest.plist -c 'set BuildIdentities:0:Manifest:RestoreDeviceTree:Info:Path Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k48ap.restore.img3'
 	
 	# iphone kc (ipad 2 kc incompatible)
 	
