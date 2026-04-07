@@ -108,6 +108,21 @@ function build_artifacts()
 	
 	xpwntool DeviceTree.patched "$artifacts/DeviceTree.k48ap.img3" -t ios_5_ipad/Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k48ap.img3
 	xpwntool DeviceTree.restore.patched "$artifacts/DeviceTree.k48ap.restore.img3" -t ios_5_ipad/Firmware/all_flash/all_flash.k48ap.production/DeviceTree.k48ap.img3
+	
+	# extract iphone dsc files
+	
+	clang -fmodules -I "$repo_dyld" "$code/dsc.m" -o dsc
+	
+	./dsc "$root_iphone/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7" /System/Library/Extensions/IMGSGX535GLDriver.bundle/IMGSGX535GLDriver
+	codesign -fs - IMGSGX535GLDriver
+	
+	./dsc "$root_iphone/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7" /System/Library/VideoDecoders/H264H2.videodecoder
+	codesign -fs - H264H2.videodecoder
+
+	./dsc "$root_iphone/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7" /System/Library/VideoDecoders/MP4VH2.videodecoder
+	codesign -fs - MP4VH2.videodecoder
+	
+	mv IMGSGX535GLDriver H264H2.videodecoder MP4VH2.videodecoder "$artifacts"
 }
 
 function patch_boot_files()
@@ -173,22 +188,12 @@ yolosign("dyld_shared_cache_armv7.patched", [off2page(64288286)])'
 	sudo chown -R root:wheel "$root/System/Library/Caches/com.apple.dyld"
 	sudo chmod -R 755 "$root/System/Library/Caches/com.apple.dyld"
 	
-	# iphone dsc graphics drivers
+	# iphone dsc graphics drivers, so we can keep ipad dsc (for keyboard, etc)
 	
-	clang -fmodules -I "$repo_dyld" "$code/dsc.m" -o dsc
-	
-	./dsc "$root_iphone/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7" /System/Library/Extensions/IMGSGX535GLDriver.bundle/IMGSGX535GLDriver
-	codesign -fs - IMGSGX535GLDriver
 	sudo mkdir "$root/System/Library/Extensions/IMGSGX535GLDriver.bundle"
-	sudo cp IMGSGX535GLDriver "$root/System/Library/Extensions/IMGSGX535GLDriver.bundle"
-
-	./dsc "$root_iphone/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7" /System/Library/VideoDecoders/H264H2.videodecoder
-	codesign -fs - H264H2.videodecoder
-	sudo cp H264H2.videodecoder "$root/System/Library/VideoDecoders"
-
-	./dsc "$root_iphone/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7" /System/Library/VideoDecoders/MP4VH2.videodecoder
-	codesign -fs - MP4VH2.videodecoder
-	sudo cp MP4VH2.videodecoder "$root/System/Library/VideoDecoders"
+	sudo cp "$artifacts/IMGSGX535GLDriver" "$root/System/Library/Extensions/IMGSGX535GLDriver.bundle"
+	
+	sudo cp "$artifacts/H264H2.videodecoder" "$artifacts/MP4VH2.videodecoder" "$root/System/Library/VideoDecoders"
 	
 	# bluetooth and hactivation
 	# TODO: should probably grab a new clean gestalt plist just to be sure
