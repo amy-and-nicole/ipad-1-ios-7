@@ -28,22 +28,24 @@ function get_deps
 	mkdir "$deps"
 	pushd "$deps"
 	
-	git clone 'https://github.com/NyanSatan/SundanceInH2A'
-	git -C SundanceInH2A checkout 03865acd7b6064d7616fd34595410d707fb6fdbd
+	curl -Lf 'https://github.com/NyanSatan/SundanceInH2A/archive/03865acd7b6064d7616fd34595410d707fb6fdbd.zip' | tar xf -
+	mv SundanceInH2A-* SundanceInH2A
+	
+	curl -Lf 'https://github.com/LukeZGD/Legacy-iOS-Kit/archive/88d0fc5931b40204f7b1ec095f7e928fd6b0f595.zip' | tar xf -
+	mv Legacy-iOS-Kit-* Legacy-iOS-Kit
 
-	git clone 'https://github.com/LukeZGD/Legacy-iOS-Kit'
-	git -C Legacy-iOS-Kit checkout 88d0fc5931b40204f7b1ec095f7e928fd6b0f595
+	curl -Lf 'https://github.com/staturnzz/lyncis_site/archive/49f7206119c5b66fa1b1d5d57083ecb4864ca584.zip' | tar xf -
+	mv lyncis_site-* lyncis_site
 
-	git clone 'https://github.com/staturnzz/lyncis_site'
-	git -C lyncis_site checkout 49f7206119c5b66fa1b1d5d57083ecb4864ca584
+	curl -Lf 'https://github.com/apple-oss-distributions/dyld/archive/4983666182a957ceca3553910bb407cee5259581.zip' | tar xf -
+	mv dyld-* dyld
 
-	git clone 'https://github.com/apple-oss-distributions/dyld'
-	git -C dyld checkout dyld-353.2.1
-
-	curl -f 'https://secure-appldnld.apple.com/iOS5.1.1/041-4292.02120427.Tkk0d/iPad1,1_5.1.1_9B206_Restore.ipsw' -O
-	curl -f 'https://secure-appldnld.apple.com/iOS7.1/031-4776.20140627.JjYSr/iPad2,1_7.1.2_11D257_Restore.ipsw' -O
-	curl -f 'http://appldnld.apple.com/iOS7.1/031-4812.20140627.cq6y8/iPhone3,1_7.1.2_11D257_Restore.ipsw' -O
-
+	curl -LfO 'https://secure-appldnld.apple.com/iOS5.1.1/041-4292.02120427.Tkk0d/iPad1,1_5.1.1_9B206_Restore.ipsw'
+	curl -LfO 'https://secure-appldnld.apple.com/iOS7.1/031-4776.20140627.JjYSr/iPad2,1_7.1.2_11D257_Restore.ipsw'
+	curl -LfO 'http://appldnld.apple.com/iOS7.1/031-4812.20140627.cq6y8/iPhone3,1_7.1.2_11D257_Restore.ipsw'
+	
+	# user may place debs (e.g. openssh) here for convenience
+	
 	mkdir debs
 	
 	popd
@@ -315,6 +317,7 @@ then
 fi
 
 xattr -cr "$repo_legacy/bin/macos"
+chmod -R +x "$repo_legacy/bin/macos"
 PATH+=":/usr/libexec:$repo_legacy/bin/macos"
 
 eject_all
