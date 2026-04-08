@@ -53,12 +53,13 @@ function get_deps
 
 function eject_all()
 {
-	set +e
-	diskutil eject "$root"
-	diskutil eject "$root_iphone"
-	diskutil eject "$root_5"
-	diskutil eject "$ramdisk"
-	set -e
+	for mount in "$root" "$root_iphone" "$root_5" "$ramdisk"
+	do
+		if [[ -e "$mount" ]]
+		then
+			diskutil eject "$mount"
+		fi
+	done
 }
 
 function setup()
@@ -67,9 +68,9 @@ function setup()
 	mkdir "$temp"
 	pushd "$temp"
 
-	unzip "$ipsw_5_ipad" -d ios_5_ipad
-	unzip "$ipsw_7_ipad" -d ios_7_ipad
-	unzip "$ipsw_7_iphone" -d ios_7_iphone
+	unzip -q "$ipsw_5_ipad" -d ios_5_ipad
+	unzip -q "$ipsw_7_ipad" -d ios_7_ipad
+	unzip -q "$ipsw_7_iphone" -d ios_7_iphone
 	
 	# for rootfs
 	
@@ -77,7 +78,7 @@ function setup()
 	hdiutil resize -size 1.5g root.dmg
 	hdiutil attach -owners on root.dmg
 	
-	# for kc and dsc
+	# for kc and graphics drivers
 	
 	dmg extract ios_7_iphone/058-4520-010.dmg root_ios_7_iphone.dmg -k 38d0320d099b9dd34ffb3308c53d397f14955b347d6a433fe173acc2ced1ae78756b3684
 	hdiutil attach -owners on root_ios_7_iphone.dmg
@@ -115,15 +116,8 @@ function build_artifacts()
 	
 	clang -fmodules -I "$repo_dyld" "$code/dsc.m" -o dsc
 	
-	./dsc "$root_iphone/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7" /System/Library/Extensions/IMGSGX535GLDriver.bundle/IMGSGX535GLDriver
-	codesign -fs - IMGSGX535GLDriver
-	
-	./dsc "$root_iphone/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7" /System/Library/VideoDecoders/H264H2.videodecoder
-	codesign -fs - H264H2.videodecoder
-
-	./dsc "$root_iphone/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7" /System/Library/VideoDecoders/MP4VH2.videodecoder
-	codesign -fs - MP4VH2.videodecoder
-	
+	./dsc "$root_iphone/System/Library/Caches/com.apple.dyld/dyld_shared_cache_armv7" /System/Library/Extensions/IMGSGX535GLDriver.bundle/IMGSGX535GLDriver /System/Library/VideoDecoders/H264H2.videodecoder /System/Library/VideoDecoders/MP4VH2.videodecoder
+	codesign -fs - IMGSGX535GLDriver H264H2.videodecoder MP4VH2.videodecoder
 	mv IMGSGX535GLDriver H264H2.videodecoder MP4VH2.videodecoder "$artifacts"
 	
 	# TODO: cc workaround, still don't understand root cause, see UIScreenEdgePanRecognizer._useGrapeFlags?
@@ -274,7 +268,7 @@ function finalize
 	img3maker -f ramdisk.dmg -o output/038-4361-021.dmg -t rdsk
 	
 	pushd output
-	zip -r ../output.ipsw *
+	zip -r -q ../output.ipsw *
 	popd
 }
 
